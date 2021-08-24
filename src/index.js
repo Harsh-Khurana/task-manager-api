@@ -1,6 +1,6 @@
 const express = require('express');
-require('./db/mongoose');
 require('dotenv').config();
+require('./db/mongoose');
 const userApi = require('./routes/user');
 const taskApi = require('./routes/task');
 

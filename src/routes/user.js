@@ -1,14 +1,17 @@
 const express = require('express');
 const multer = require('multer');
+const sharp = require('sharp');
 const router = express.Router();
 const User = require('../models/user');
 const auth = require('../middlewares/auth');
-const sharp = require('sharp');
+const { sendWelcomeEmail, sendDeleteEmail } = require('../emails/account');
 
 router.post('/', async (req, res)=>{
     const user = new User(req.body);
     try{
         await user.save();
+        sendWelcomeEmail(user.email, user.name);
+
         const token = await user.generateAuthToken();
         return res.status(201).send({ user, token });
     }catch(e){
@@ -75,6 +78,8 @@ router.patch('/me', auth, async (req, res)=>{
 router.delete('/me', auth, async (req, res)=>{
     try{
         await req.user.remove();
+        sendDeleteEmail(req.user.email, req.user.name);
+        
         res.send(req.user);
     }catch(e){
         res.status(400).send();
@@ -83,7 +88,7 @@ router.delete('/me', auth, async (req, res)=>{
 
 const upload = multer({
     limits: {
-        fileSize: 1024*1024
+        fileSize: 1024*1024 // 1MB
     },
     fileFilter(req, file, cb){
         if(!file.originalname.match(/\.(jpg|jpeg|png)$/)){
